@@ -1,5 +1,18 @@
 package com.kvp.streams;
 
+import com.kvp.domain.Introduce;
+import com.kvp.streams.serdes.IntroduceSerde;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
+
+import java.util.Properties;
+
 //https://coding-start.tistory.com/138
 public class StreamsApplication {
     public static void main(String[] args) {
@@ -10,5 +23,29 @@ public class StreamsApplication {
          *   - 나이를 10살 더해주세요.
          *   - 이름의 마스킹을 진행해 주세요.
          */
+        Serde<String> stringSerde= Serdes.String();
+        IntroduceSerde introduceSerde = new IntroduceSerde();
+
+        StreamsBuilder streamsBuilder = new StreamsBuilder();
+
+        KStream<String, Introduce> changeIntroduceKStream = streamsBuilder.stream("kvp-input", Consumed.with(stringSerde, introduceSerde))
+                .mapValues((introduce) -> {
+                    Introduce copiedIntroduce = introduce.toBuilder().build();
+                    copiedIntroduce.maskingName();
+                    copiedIntroduce.addAge();
+                    return copiedIntroduce;
+                });
+
+        changeIntroduceKStream.to("kvp-output", Produced.with(stringSerde, introduceSerde));
+
+        KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(), getProperties());
+        kafkaStreams.start();
+    }
+
+    private static Properties getProperties() {
+        Properties props = new Properties();
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "kvp_streams_id");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        return props;
     }
 }

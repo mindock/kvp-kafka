@@ -1,5 +1,6 @@
 package com.kvp.kafka.producer;
 
+import com.kvp.domain.Developer;
 import com.kvp.domain.Introduce;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -16,22 +17,31 @@ import java.util.Map;
 //https://docs.spring.io/spring-kafka/docs/current/reference/html/#kafka-template
 @Configuration
 public class KafkaProducerConfiguration {
-    @Bean
-    public ProducerFactory<String, Introduce> producerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfigs());
-    }
-
-    @Bean
-    public Map<String, Object> producerConfigs() {
+    public ProducerFactory<String, Introduce> introduceProducerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return props;
+
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean
-    public KafkaTemplate<String, Introduce> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public KafkaTemplate<String, Introduce> introduceKafkaTemplateTemplate() {
+        return new KafkaTemplate<>(introduceProducerFactory());
+    }
+
+    public ProducerFactory<String, Developer> developerProducerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        return new DefaultKafkaProducerFactory<>(props);
+    }
+
+    @Bean
+    public KafkaTemplate<String, Developer> developerKafkaTemplate() {
+        return new KafkaTemplate<>(developerProducerFactory());
     }
 }

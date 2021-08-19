@@ -2,6 +2,7 @@ package com.kvp.kafka.producer;
 
 import com.kvp.domain.Developer;
 import com.kvp.domain.Introduce;
+import com.kvp.domain.PurchaseCustomer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
@@ -18,12 +19,7 @@ import java.util.Map;
 @Configuration
 public class KafkaProducerConfiguration {
     public ProducerFactory<String, Introduce> introduceProducerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-
-        return new DefaultKafkaProducerFactory<>(props);
+        return new DefaultKafkaProducerFactory<>(getPropsWithStringKeyAndJsonValue());
     }
 
     @Bean
@@ -32,16 +28,29 @@ public class KafkaProducerConfiguration {
     }
 
     public ProducerFactory<String, Developer> developerProducerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-
-        return new DefaultKafkaProducerFactory<>(props);
+        return new DefaultKafkaProducerFactory<>(getPropsWithStringKeyAndJsonValue());
     }
 
     @Bean
     public KafkaTemplate<String, Developer> developerKafkaTemplate() {
         return new KafkaTemplate<>(developerProducerFactory());
+    }
+
+    public ProducerFactory<String, PurchaseCustomer> purchaseCustomerProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(getPropsWithStringKeyAndJsonValue());
+    }
+
+    @Bean
+    public KafkaTemplate<String, PurchaseCustomer> purchaseCustomerKafkaTemplate() {
+        return new KafkaTemplate<>(purchaseCustomerProducerFactory());
+    }
+
+    private static Map<String, Object> getPropsWithStringKeyAndJsonValue() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        return props;
     }
 }

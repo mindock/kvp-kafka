@@ -1,5 +1,6 @@
 package com.kvp.kafka.consumer;
 
+import com.kvp.domain.Customer;
 import com.kvp.domain.Developer;
 import com.kvp.domain.Introduce;
 import com.kvp.domain.SimpleDeveloper;
@@ -18,13 +19,8 @@ import java.util.Map;
 @Configuration
 public class ConsumerConfiguration {
     public ConsumerFactory<String, Introduce> introduceConsumerConfigs() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, "kvp");
-        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
         return new DefaultKafkaConsumerFactory<>(
-                configs,
+                getConfigs("kvp"),
                 new StringDeserializer(),
                 new JsonDeserializer<>(Introduce.class));
     }
@@ -37,13 +33,8 @@ public class ConsumerConfiguration {
     }
 
     public ConsumerFactory<String, Developer> developerConsumerConfigs() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, "developer");
-        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
         return new DefaultKafkaConsumerFactory<>(
-                configs,
+                getConfigs("developer"),
                 new StringDeserializer(),
                 new JsonDeserializer<>(Developer.class));
     }
@@ -56,13 +47,8 @@ public class ConsumerConfiguration {
     }
 
     public ConsumerFactory<String, SimpleDeveloper> simpleDeveloperConsumerConfigs() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, "simple-developer");
-        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
         return new DefaultKafkaConsumerFactory<>(
-                configs,
+                getConfigs("simple-developer"),
                 new StringDeserializer(),
                 new JsonDeserializer<>(SimpleDeveloper.class));
     }
@@ -72,5 +58,29 @@ public class ConsumerConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, SimpleDeveloper> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(simpleDeveloperConsumerConfigs());
         return factory;
+    }
+
+
+    public ConsumerFactory<String, Customer> customerConsumerConfigs() {
+        return new DefaultKafkaConsumerFactory<>(
+                getConfigs("customer"),
+                new StringDeserializer(),
+                new JsonDeserializer<>(Customer.class));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Customer> customerListener() {
+        ConcurrentKafkaListenerContainerFactory<String, Customer> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(customerConsumerConfigs());
+        return factory;
+    }
+
+    private static Map<String, Object> getConfigs(String groupId) {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        return configs;
     }
 }

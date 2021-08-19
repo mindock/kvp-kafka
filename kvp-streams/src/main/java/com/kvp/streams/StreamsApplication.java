@@ -3,18 +3,19 @@ package com.kvp.streams;
 import com.kvp.domain.Developer;
 import com.kvp.domain.Introduce;
 import com.kvp.domain.Language;
-import com.kvp.streams.serdes.DeveloperSerde;
-import com.kvp.streams.serdes.IntroduceSerde;
-import com.kvp.streams.serdes.SimpleDeveloperSerde;
+import com.kvp.domain.PurchaseCustomer;
+import com.kvp.streams.serdes.*;
+import com.kvp.streams.transformer.CustomerTransformer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Predicate;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 
 import java.util.Properties;
 
@@ -25,6 +26,8 @@ public class StreamsApplication {
         IntroduceSerde introduceSerde = new IntroduceSerde();
         DeveloperSerde developerSerde = new DeveloperSerde();
         SimpleDeveloperSerde simpleDeveloperSerde = new SimpleDeveloperSerde();
+        PurchaseCustomerSerde purchaseCustomerSerde = new PurchaseCustomerSerde();
+        CustomerSerde customerSerde = new CustomerSerde();
 
         StreamsBuilder streamsBuilder = new StreamsBuilder();
 
@@ -42,6 +45,8 @@ public class StreamsApplication {
         // step2
         KStream<String, Developer> developerConsumeStream = streamsBuilder.stream("developer", Consumed.with(stringSerde, developerSerde));
 
+        developerConsumeStream.print(Printed.<String, Developer>toSysOut().withLabel("[개발자다]"));
+
         Predicate<String, Developer> isJunior = (key, developer) -> developer.isJunior();
         Predicate<String, Developer> isSenior = (key, developer) -> developer.isSenior();
         KStream<String, Developer>[] developerStreamByYear = developerConsumeStream.branch(isJunior, isSenior);
@@ -55,6 +60,19 @@ public class StreamsApplication {
         seniorDeveloperStream.filter((key, developer) -> developer.compare(Language.JAVA))
                 .mapValues((developer) -> developer.toSimple())
                 .to("senior-java-developer", Produced.with(stringSerde, simpleDeveloperSerde));
+
+        // step3
+        KStream<String, PurchaseCustomer> purchaseCustomerKStream = streamsBuilder.stream("purchase-customer", Consumed.with(stringSerde, purchaseCustomerSerde));
+
+        String customerStateStoreName = "customerStateStore";
+        KeyValueBytesStoreSupplier customerStoreSupplier = Stores.inMemoryKeyValueStore(customerStateStoreName);
+        StoreBuilder<KeyValueStore<String, Long>> customerStoreBuilder = Stores.keyValueStoreBuilder(customerStoreSupplier, stringSerde, Serdes.Long())
+                .withLoggingDisabled();
+        streamsBuilder.addStateStore(customerStoreBuilder);
+        purchaseCustomerKStream.print(Printed.<String, PurchaseCustomer>toSysOut().withLabel("[구매고객이다]"));
+
+        purchaseCustomerKStream.transformValues(() -> new CustomerTransformer(customerStateStoreName), customerStateStoreName)
+                .to("customer", Produced.with(stringSerde, customerSerde));
 
         KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(), getProperties());
         kafkaStreams.start();

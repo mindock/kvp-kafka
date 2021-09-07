@@ -1,10 +1,8 @@
 package com.kvp.kafka.consumer;
 
-import com.kvp.domain.Customer;
-import com.kvp.domain.Developer;
-import com.kvp.domain.Introduce;
-import com.kvp.domain.SimpleDeveloper;
+import com.kvp.domain.*;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,6 +70,34 @@ public class ConsumerConfiguration {
     public ConcurrentKafkaListenerContainerFactory<String, Customer> customerListener() {
         ConcurrentKafkaListenerContainerFactory<String, Customer> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(customerConsumerConfigs());
+        return factory;
+    }
+
+    public ConsumerFactory<Long, DailyWorkLog> dailyWorkLogConsumerConfigs() {
+        return new DefaultKafkaConsumerFactory<>(
+                getConfigs("work-log"),
+                new LongDeserializer(),
+                new JsonDeserializer<>(DailyWorkLog.class));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<Long, DailyWorkLog> dailyWorkLogListener() {
+        ConcurrentKafkaListenerContainerFactory<Long, DailyWorkLog> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(dailyWorkLogConsumerConfigs());
+        return factory;
+    }
+
+    public ConsumerFactory<Long, OverWorkLog> overWorkLogConsumerConfigs() {
+        return new DefaultKafkaConsumerFactory<>(
+                getConfigs("work-log"),
+                new LongDeserializer(),
+                new JsonDeserializer<>(OverWorkLog.class));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<Long, OverWorkLog> overWorkLogListener() {
+        ConcurrentKafkaListenerContainerFactory<Long, OverWorkLog> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(overWorkLogConsumerConfigs());
         return factory;
     }
 

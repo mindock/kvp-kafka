@@ -7,3 +7,7 @@ http://localhost:8080/kafka/developer?name=김혜린&age=27&language=JAVA&year=4
 http://localhost:8080/kafka/developer?name=박선영&age=27&language=Typescript&year=4
 ###
 http://localhost:8080/kafka/customer?name=박선영&purchaseAmount=100000
+###
+http://localhost:8080/kafka/work-log?no=1&name=박선영&workType=WORK&dateTime=2021-09-09 10:00:00
+###
+http://localhost:8080/kafka/work-log?no=1&name=박선영&workType=OFF_WORK&dateTime=2021-09-09 21:30:00

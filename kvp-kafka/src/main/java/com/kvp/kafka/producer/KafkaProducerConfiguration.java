@@ -3,6 +3,7 @@ package com.kvp.kafka.producer;
 import com.kvp.domain.Developer;
 import com.kvp.domain.Introduce;
 import com.kvp.domain.PurchaseCustomer;
+import com.kvp.domain.WorkLog;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +44,15 @@ public class KafkaProducerConfiguration {
     @Bean
     public KafkaTemplate<String, PurchaseCustomer> purchaseCustomerKafkaTemplate() {
         return new KafkaTemplate<>(purchaseCustomerProducerFactory());
+    }
+
+    public ProducerFactory<Long, WorkLog> workLogProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(getPropsWithStringKeyAndJsonValue());
+    }
+
+    @Bean
+    public KafkaTemplate<Long, WorkLog> workLogKafkaTemplate() {
+        return new KafkaTemplate<>(workLogProducerFactory());
     }
 
     private static Map<String, Object> getPropsWithStringKeyAndJsonValue() {
